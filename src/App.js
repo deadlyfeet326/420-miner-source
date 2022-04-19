@@ -36,7 +36,7 @@ function App() {
 
   const[rewards, setRewards] = useState(0)
   const[connectText, setConnextText] = useState("Connect")
-  const[referralLink, setReferralLink] = useState("localhost:3000?ref=")
+  const[referralLink, setReferralLink] = useState("http://420miner.com/?ref=")
   const [isMobile, setIsMobile] = useState(false)
   const [referralAddress, setReferralAddress] = useState('0x0000000000000000000000000000000000000000')
  
@@ -50,12 +50,24 @@ function App() {
 // }
 
 useEffect(() => {
-  connectWalletHandler()
-  let referral = window.location.href.replace("http://localhost:3000/?ref=", '')
-  setReferralAddress(referral)
+  if (window.location.href.includes("http://420miner.com?ref=")){
+    let referral = window.location.href.replace("http://420miner.com?ref=", '')
+    setReferralAddress(referral)
+  }else if (window.location.href.includes("http://420miner.com/?ref=")){
+    let referral = window.location.href.replace("http://420miner.com/?ref=", '')
+    setReferralAddress(referral)
+  }
+  
 }, [])
 
 useEffect(() => {
+  if(window.ethereum){
+    console.log(window.ethereum.networkVersion)
+    if (window.ethereum.networkVersion !== gameNetworkId){
+      console.log("wrong chain")
+      setConnextText("Switch Chain")
+    }
+  }
   window.ethereum.on("chainChanged", networkChanged)
   window.ethereum.on("accountsChanged", accountChanged)
 
@@ -64,6 +76,12 @@ useEffect(() => {
       window.ethereum.removeListener("accountsChanged", accountChanged)
   }
 }, [])
+
+// useEffect(() => {
+//   if (window.location.href.includes('/?')){
+//     window.location = window.location.href.replace('/?', '?')
+//   }
+// })
 
 // create an event listener
 useEffect(() => {
@@ -82,14 +100,20 @@ useEffect(() => {
 }, [gameContract])
 
 function networkChanged(chainId){
-  console.log(chainId)
   if (chainId !== gameNetworkId){
       console.log("wrong chain")
+      setConnextText("Switch Chain")
   }
 }
 
 const connectWalletHandler = async () => {
   if (window.ethereum) {
+      if (connectText == "Switch Chain"){
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: gameNetworkId }], // chainId must be in hexadecimal numbers
+        });
+      }
       let result = await window.ethereum.request({method: 'eth_requestAccounts'})
       accountChangedHandler(result[0])
       setNetworkId()
@@ -105,7 +129,7 @@ function accountChanged(accountList) {
 const accountChangedHandler = (newAccount) => {
   let checksumAccount = ethers.utils.getAddress(newAccount)
   setDefaultAccount(checksumAccount);
-  setReferralLink("localhost:3000?ref=" + checksumAccount)
+  setReferralLink("http://420miner.com?ref=" + checksumAccount)
   setConnextText(checksumAccount.toString().substring(0, 5) + "..." + checksumAccount.toString().substring(checksumAccount.toString().length - 4, checksumAccount.toString().length - 1))
   updateEthers()
 }
