@@ -109,10 +109,19 @@ function networkChanged(chainId){
 const connectWalletHandler = async () => {
   if (window.ethereum) {
       if (connectText == "Switch Chain"){
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: gameNetworkId }], // chainId must be in hexadecimal numbers
-        });
+        try{
+          await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: gameNetworkId }], // chainId must be in hexadecimal numbers
+          });
+        }catch{
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{ chainId: gameNetworkId, chainName: "BSC Testnet", nativeCurrency: {
+              name: "BNB", symbol: "BNB", decimals: 18
+            }, rpcUrls: ["https://data-seed-prebsc-1-s1.binance.org:8545"], blockExplorerUrls: ["https://explorer.binance.org/smart-testnet"] }], // chainId must be in hexadecimal numbers
+          });
+        }
       }
       let result = await window.ethereum.request({method: 'eth_requestAccounts'})
       accountChangedHandler(result[0])
